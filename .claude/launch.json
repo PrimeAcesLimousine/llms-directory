@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "LLMs Directory Dev",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["/Users/LawrenceLim/Claude Project - LLMs Directory/start-dev.sh"],
+      "port": 5173
+    }
+  ]
+}

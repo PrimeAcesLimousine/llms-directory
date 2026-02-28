@@ -1,0 +1,42 @@
+export const initialListings = [
+  {
+    id: 1,
+    name: "Anthropic Documentation",
+    url: "anthropic.com/llms.txt",
+    fullUrl: "https://anthropic.com/llms.txt",
+    icon: "globe",
+    tags: ["AI MODELS", "VERIFIED"],
+  },
+  {
+    id: 2,
+    name: "OpenAI Help Center",
+    url: "openai.com/llms.txt",
+    fullUrl: "https://openai.com/llms.txt",
+    icon: "doc",
+    tags: ["AI MODELS", "TECHNICAL"],
+  },
+  {
+    id: 3,
+    name: "Mistral AI Labs",
+    url: "mistral.ai/llms.txt",
+    fullUrl: "https://mistral.ai/llms.txt",
+    icon: "code",
+    tags: ["AI MODELS", "TECHNICAL"],
+  },
+  {
+    id: 4,
+    name: "DeepMind Research",
+    url: "deepmind.google/llms.txt",
+    fullUrl: "https://deepmind.google/llms.txt",
+    icon: "doc",
+    tags: ["AI MODELS", "VERIFIED"],
+  },
+  {
+    id: 5,
+    name: "Cohere Platform",
+    url: "cohere.com/llms.txt",
+    fullUrl: "https://cohere.com/llms.txt",
+    icon: "globe",
+    tags: ["AI MODELS"],
+  },
+];
