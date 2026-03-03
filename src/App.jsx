@@ -9,7 +9,7 @@ import { useListings } from "./hooks/useListings";
 
 function AppInner() {
   const [page, setPage] = useState("home");
-  const { listings, addListing } = useListings();
+  const { listings, loading, addListing } = useListings();
   const { isDesktop } = useBreakpoint();
 
   const handleNavigate = (target) => setPage(target);
@@ -20,10 +20,10 @@ function AppInner() {
 
       <main style={isDesktop ? desktopMainStyle : {}}>
         {page === "home" && (
-          <HomePage listings={listings} onNavigate={handleNavigate} />
+          <HomePage listings={listings} loading={loading} onNavigate={handleNavigate} />
         )}
         {page === "directory" && (
-          <DirectoryPage listings={listings} onNavigate={handleNavigate} />
+          <DirectoryPage listings={listings} loading={loading} onNavigate={handleNavigate} />
         )}
         {page === "submit" && (
           <SubmitPage onNavigate={handleNavigate} onSubmit={addListing} />

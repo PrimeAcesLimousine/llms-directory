@@ -1,62 +1,98 @@
 import { useState, useEffect } from "react";
 import { initialListings } from "../data/initialListings";
 
-const STORAGE_KEY = "llms_directory_listings";
-const STORAGE_VERSION_KEY = "llms_directory_version";
-const STORAGE_VERSION = "3"; // bumped: removed AI MODELS/TECHNICAL tags
+const API = "/api/listings";
+
+function rowToListing(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    url: row.url,
+    fullUrl: row.full_url,
+    icon: "globe",
+    tags: row.verified ? ["VERIFIED"] : [],
+    checking: false,
+  };
+}
 
 export function useListings() {
-  const [listings, setListings] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const version = localStorage.getItem(STORAGE_VERSION_KEY);
-      if (stored && version === STORAGE_VERSION) return JSON.parse(stored);
-    } catch (_) {}
-    return initialListings;
-  });
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Load from API on mount; fall back to seed data if API unavailable (local dev)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(listings));
-    localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
-  }, [listings]);
+    fetch(API)
+      .then((r) => {
+        if (!r.ok) throw new Error("API error");
+        return r.json();
+      })
+      .then((rows) => setListings(rows.map(rowToListing)))
+      .catch(() => setListings(initialListings)) // local dev fallback
+      .finally(() => setLoading(false));
+  }, []);
 
   const addListing = async (entry) => {
-    const id = Date.now();
     const fullUrl = entry.url.startsWith("http")
       ? entry.url
       : `https://${entry.url}`;
+    const displayUrl = entry.url.replace(/^https?:\/\//, "");
 
-    // Add immediately with checking: true
-    const newEntry = {
-      id,
-      name: entry.name,
-      url: entry.url.replace(/^https?:\/\//, ""),
-      fullUrl,
-      icon: "globe",
-      tags: [],
-      checking: true,
-    };
-    setListings((prev) => [newEntry, ...prev]);
+    // 1. Save to DB
+    let newId = null;
+    try {
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: entry.name, url: displayUrl, full_url: fullUrl }),
+      });
+      const row = await res.json();
+      newId = row.id;
 
-    // Verify in background — no-cors resolves if server exists, throws on network failure
+      // Add to local state immediately (unverified, checking)
+      setListings((prev) => [
+        {
+          id: newId,
+          name: row.name,
+          url: row.url,
+          fullUrl: row.full_url,
+          icon: "globe",
+          tags: [],
+          checking: true,
+        },
+        ...prev,
+      ]);
+    } catch {
+      // API unavailable (local dev) — add optimistically with a temp id
+      newId = Date.now();
+      setListings((prev) => [
+        { id: newId, name: entry.name, url: displayUrl, fullUrl: fullUrl, icon: "globe", tags: [], checking: true },
+        ...prev,
+      ]);
+    }
+
+    // 2. Verify URL in background
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       await fetch(fullUrl, { mode: "no-cors", signal: controller.signal });
       clearTimeout(timeout);
-      // Server responded → VERIFIED
+
+      // 3. Mark verified in DB
+      try {
+        await fetch(`${API}/${newId}`, { method: "PATCH" });
+      } catch { /* local dev — ignore */ }
+
       setListings((prev) =>
         prev.map((l) =>
-          l.id === id ? { ...l, tags: ["VERIFIED"], checking: false } : l
+          l.id === newId ? { ...l, tags: ["VERIFIED"], checking: false } : l
         )
       );
     } catch {
-      // Timed out or unreachable → no tag, just stop checking
       setListings((prev) =>
-        prev.map((l) => (l.id === id ? { ...l, checking: false } : l))
+        prev.map((l) => (l.id === newId ? { ...l, checking: false } : l))
       );
     }
   };
 
-  return { listings, addListing };
+  return { listings, loading, addListing };
 }

@@ -3,7 +3,7 @@ import { ListingCard } from "../components/ListingCard";
 import { SearchIcon, InfoIcon } from "../components/Icon";
 import { useBreakpoint } from "../context/BreakpointContext";
 
-export function DirectoryPage({ listings, onNavigate }) {
+export function DirectoryPage({ listings, loading, onNavigate }) {
   const [query, setQuery] = useState("");
   const { isDesktop } = useBreakpoint();
 
@@ -33,7 +33,9 @@ export function DirectoryPage({ listings, onNavigate }) {
         </div>
 
         {/* Desktop 2-col grid */}
-        {sorted.length === 0 ? (
+        {loading ? (
+          <p style={{ textAlign: "center", color: "#9CA3AF", marginTop: 40 }}>Loading listings…</p>
+        ) : sorted.length === 0 ? (
           <p style={{ textAlign: "center", color: "#9CA3AF", marginTop: 40 }}>No results found.</p>
         ) : (
           <div style={desktopGridStyle}>
@@ -78,7 +80,9 @@ export function DirectoryPage({ listings, onNavigate }) {
       </div>
 
       <div style={{ padding: "0 16px 100px" }}>
-        {sorted.length === 0 ? (
+        {loading ? (
+          <p style={{ textAlign: "center", color: "#9CA3AF", marginTop: 40 }}>Loading listings…</p>
+        ) : sorted.length === 0 ? (
           <p style={{ textAlign: "center", color: "#9CA3AF", marginTop: 40 }}>No results found.</p>
         ) : (
           sorted.map((listing) => (
