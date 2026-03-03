@@ -34,3 +34,7 @@ button:active {
   opacity: 0.85;
   transform: scale(0.98);
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

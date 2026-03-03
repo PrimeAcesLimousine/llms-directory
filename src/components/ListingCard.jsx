@@ -1,15 +1,8 @@
 import { Icon } from "./Icon";
 
-const TAG_COLORS = {
-  VERIFIED: { bg: "#DCFCE7", color: "#16A34A" },
-  TECHNICAL: { bg: "#EFF6FF", color: "#2563EB" },
-  EDUCATION: { bg: "#EFF6FF", color: "#2563EB" },
-  DOCUMENTATION: { bg: "#EFF6FF", color: "#2563EB" },
-  "AI MODELS": { bg: "#EFF6FF", color: "#2563EB" },
-  PUBLIC: { bg: "#EFF6FF", color: "#2563EB" },
-};
-
 export function ListingCard({ listing, showIcon = false }) {
+  const hasVerified = listing.tags && listing.tags.includes("VERIFIED");
+
   return (
     <div style={cardStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -29,18 +22,16 @@ export function ListingCard({ listing, showIcon = false }) {
           >
             {listing.url}
           </a>
-          {listing.tags && listing.tags.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-              {listing.tags.map((tag) => {
-                const style = TAG_COLORS[tag] || { bg: "#F3F4F6", color: "#6B7280" };
-                return (
-                  <span key={tag} style={{ ...tagStyle, background: style.bg, color: style.color }}>
-                    {tag}
-                  </span>
-                );
-              })}
-            </div>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, minHeight: 22 }}>
+            {listing.checking ? (
+              <div style={spinnerWrapStyle}>
+                <div style={spinnerStyle} />
+                <span style={checkingTextStyle}>Checking…</span>
+              </div>
+            ) : hasVerified ? (
+              <span style={verifiedTagStyle}>✓ VERIFIED</span>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>
@@ -87,10 +78,35 @@ const urlStyle = {
   whiteSpace: "nowrap",
 };
 
-const tagStyle = {
+const verifiedTagStyle = {
   fontSize: 10,
   fontWeight: 700,
   letterSpacing: "0.05em",
   borderRadius: 6,
   padding: "3px 8px",
+  background: "#DCFCE7",
+  color: "#16A34A",
+};
+
+const spinnerWrapStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+};
+
+const spinnerStyle = {
+  width: 12,
+  height: 12,
+  borderRadius: "50%",
+  borderWidth: 2,
+  borderStyle: "solid",
+  borderColor: "#D1D5DB",
+  borderTopColor: "#6B7280",
+  animation: "spin 0.7s linear infinite",
+};
+
+const checkingTextStyle = {
+  fontSize: 11,
+  color: "#9CA3AF",
+  fontWeight: 500,
 };

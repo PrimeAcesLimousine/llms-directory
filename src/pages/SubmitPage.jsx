@@ -6,6 +6,7 @@ export function SubmitPage({ onNavigate, onSubmit }) {
   const [form, setForm] = useState({ name: "", url: "" });
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { isDesktop } = useBreakpoint();
 
   const validate = () => {
@@ -22,14 +23,16 @@ export function SubmitPage({ onNavigate, onSubmit }) {
     return errs;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    onSubmit({
+    setSubmitting(true);
+    await onSubmit({
       name: form.name.trim(),
       url: form.url.trim().startsWith("http") ? form.url.trim() : `https://${form.url.trim()}`,
     });
+    setSubmitting(false);
     setSubmitted(true);
   };
 
@@ -65,9 +68,10 @@ export function SubmitPage({ onNavigate, onSubmit }) {
         <span style={hintStyle}>Example: https://yourdomain.com/llms.txt</span>
         {errors.url && <span style={errorTextStyle}>{errors.url}</span>}
       </div>
-      <button type="submit" style={primaryBtnStyle}>
-        <span style={{ fontSize: 18, lineHeight: 1 }}>+</span>
-        Add to Directory
+      <button type="submit" style={{ ...primaryBtnStyle, opacity: submitting ? 0.7 : 1 }} disabled={submitting}>
+        {submitting ? "Checking…" : (
+          <><span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Add to Directory</>
+        )}
       </button>
     </form>
   );
@@ -93,7 +97,8 @@ export function SubmitPage({ onNavigate, onSubmit }) {
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 8 }}>Listed!</h2>
           <p style={{ fontSize: 14, color: "#6B7280", marginBottom: 24, textAlign: "center", lineHeight: 1.6 }}>
-            <strong>{form.name}</strong> has been added to the LLM Directory.
+            <strong>{form.name}</strong> has been added to the directory.
+            We&apos;re verifying the URL in the background — a VERIFIED badge will appear shortly if it&apos;s reachable.
           </p>
           <button onClick={() => onNavigate("directory")} style={primaryBtnStyle}>
             View Directory

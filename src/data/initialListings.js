@@ -5,7 +5,8 @@ export const initialListings = [
     url: "anthropic.com/llms.txt",
     fullUrl: "https://anthropic.com/llms.txt",
     icon: "globe",
-    tags: ["AI MODELS", "VERIFIED"],
+    tags: ["VERIFIED"],
+    checking: false,
   },
   {
     id: 2,
@@ -13,7 +14,8 @@ export const initialListings = [
     url: "openai.com/llms.txt",
     fullUrl: "https://openai.com/llms.txt",
     icon: "doc",
-    tags: ["AI MODELS", "TECHNICAL"],
+    tags: ["VERIFIED"],
+    checking: false,
   },
   {
     id: 3,
@@ -21,7 +23,8 @@ export const initialListings = [
     url: "mistral.ai/llms.txt",
     fullUrl: "https://mistral.ai/llms.txt",
     icon: "code",
-    tags: ["AI MODELS", "TECHNICAL"],
+    tags: ["VERIFIED"],
+    checking: false,
   },
   {
     id: 4,
@@ -29,7 +32,8 @@ export const initialListings = [
     url: "deepmind.google/llms.txt",
     fullUrl: "https://deepmind.google/llms.txt",
     icon: "doc",
-    tags: ["AI MODELS", "VERIFIED"],
+    tags: ["VERIFIED"],
+    checking: false,
   },
   {
     id: 5,
@@ -37,6 +41,7 @@ export const initialListings = [
     url: "cohere.com/llms.txt",
     fullUrl: "https://cohere.com/llms.txt",
     icon: "globe",
-    tags: ["AI MODELS"],
+    tags: ["VERIFIED"],
+    checking: false,
   },
 ];
