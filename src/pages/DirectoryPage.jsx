@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SearchIcon } from "../components/Icon";
 import { useBreakpoint } from "../context/BreakpointContext";
+
+const PAGE_SIZE = 25;
 
 const COLUMNS = [
   { key: "name",     label: "Name",    sortable: true },
@@ -40,7 +42,11 @@ export function DirectoryPage({ listings, loading, onNavigate }) {
   const [sortKey, setSortKey]     = useState("name");
   const [sortDir, setSortDir]     = useState("asc");
   const [statusFilter, setStatusFilter] = useState("all"); // all | verified | unverified
+  const [page, setPage]           = useState(1);
   const { isDesktop } = useBreakpoint();
+
+  // Reset to page 1 when filters/sort change
+  useEffect(() => { setPage(1); }, [query, statusFilter, sortKey, sortDir]);
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -79,6 +85,11 @@ export function DirectoryPage({ listings, loading, onNavigate }) {
     if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
     return 0;
   });
+
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const paginated  = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const startItem  = sorted.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endItem    = Math.min(page * PAGE_SIZE, sorted.length);
 
   const toolbar = (
     <div style={toolbarStyle}>
@@ -144,35 +155,63 @@ export function DirectoryPage({ listings, loading, onNavigate }) {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((listing, i) => (
-                  <tr key={listing.id} style={i % 2 === 0 ? trEvenStyle : trOddStyle}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "#EFF6FF"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#F9FAFB"}
-                  >
-                    <td style={tdNumStyle}>{i + 1}</td>
-                    <td style={tdStyle}>
-                      <span style={nameCellStyle}>{listing.name}</span>
-                    </td>
-                    <td style={tdStyle}>
-                      <a
-                        href={listing.fullUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={linkStyle}
-                      >
-                        {listing.url}
-                      </a>
-                    </td>
-                    <td style={tdStyle}>
-                      <StatusBadge listing={listing} />
-                    </td>
-                    <td style={{ ...tdStyle, ...tdNarrowStyle }}>
-                      {formatDate(listing.created_at)}
-                    </td>
-                  </tr>
-                ))}
+                {paginated.map((listing, i) => {
+                  const rowNum = (page - 1) * PAGE_SIZE + i + 1;
+                  return (
+                    <tr key={listing.id} style={i % 2 === 0 ? trEvenStyle : trOddStyle}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "#EFF6FF"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = i % 2 === 0 ? "#fff" : "#F9FAFB"}
+                    >
+                      <td style={tdNumStyle}>{rowNum}</td>
+                      <td style={tdStyle}>
+                        <span style={nameCellStyle}>{listing.name}</span>
+                      </td>
+                      <td style={tdStyle}>
+                        <a
+                          href={listing.fullUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={linkStyle}
+                        >
+                          {listing.url}
+                        </a>
+                      </td>
+                      <td style={tdStyle}>
+                        <StatusBadge listing={listing} />
+                      </td>
+                      <td style={{ ...tdStyle, ...tdNarrowStyle }}>
+                        {formatDate(listing.created_at)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+
+            {/* Pagination footer */}
+            {totalPages > 1 && (
+              <div style={paginationStyle}>
+                <button
+                  style={{ ...pageNavBtnStyle, ...(page === 1 ? pageNavDisabledStyle : {}) }}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  ← Prev
+                </button>
+
+                <span style={pageInfoStyle}>
+                  {startItem}–{endItem} of {sorted.length}
+                </span>
+
+                <button
+                  style={{ ...pageNavBtnStyle, ...(page === totalPages ? pageNavDisabledStyle : {}) }}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -237,7 +276,7 @@ export function DirectoryPage({ listings, loading, onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((listing, i) => (
+              {paginated.map((listing, i) => (
                 <tr key={listing.id} style={i % 2 === 0 ? trEvenStyle : trOddStyle}>
                   <td style={tdStyle}>
                     <span style={nameCellStyle}>{listing.name}</span>
@@ -257,6 +296,27 @@ export function DirectoryPage({ listings, loading, onNavigate }) {
               ))}
             </tbody>
           </table>
+
+          {/* Mobile pagination */}
+          {totalPages > 1 && (
+            <div style={{ ...paginationStyle, margin: "16px 0 0" }}>
+              <button
+                style={{ ...pageNavBtnStyle, ...(page === 1 ? pageNavDisabledStyle : {}) }}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                ← Prev
+              </button>
+              <span style={pageInfoStyle}>{startItem}–{endItem} of {sorted.length}</span>
+              <button
+                style={{ ...pageNavBtnStyle, ...(page === totalPages ? pageNavDisabledStyle : {}) }}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -492,4 +552,37 @@ const mobileCountStyle = {
   fontSize: 12,
   color: "#9CA3AF",
   margin: "8px 0 4px",
+};
+
+/* ── Pagination ── */
+const paginationStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 16,
+  padding: "14px 20px",
+  borderTop: "1.5px solid #E5E7EB",
+  background: "#F9FAFB",
+};
+
+const pageNavBtnStyle = {
+  background: "#fff",
+  border: "1.5px solid #E5E7EB",
+  borderRadius: 8,
+  padding: "7px 16px",
+  fontSize: 13,
+  fontWeight: 600,
+  color: "#374151",
+  cursor: "pointer",
+};
+
+const pageNavDisabledStyle = {
+  opacity: 0.35,
+  cursor: "default",
+};
+
+const pageInfoStyle = {
+  fontSize: 13,
+  color: "#6B7280",
+  fontWeight: 500,
 };
