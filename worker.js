@@ -62,33 +62,45 @@ function adminPage() {
     .filter-btn.active { background: #EFF6FF; border-color: #2563EB; color: #2563EB; }
     .count { font-size: 13px; font-weight: 600; color: #9CA3AF; white-space: nowrap; }
     .table-wrap { background: #fff; border: 1.5px solid #E5E7EB; border-radius: 14px; overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    col.col-num    { width: 48px; }
+    col.col-name   { width: 200px; }
+    col.col-url    { width: auto; }
+    col.col-status { width: 120px; }
+    col.col-added  { width: 110px; }
+    col.col-actions{ width: 230px; }
     th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700;
          color: #6B7280; text-transform: uppercase; letter-spacing: .05em;
          background: #F9FAFB; border-bottom: 1.5px solid #E5E7EB;
-         cursor: pointer; user-select: none; white-space: nowrap; }
+         cursor: pointer; user-select: none; white-space: nowrap; overflow: hidden; }
     th:hover { background: #F3F4F6; }
     th .arrow { margin-left: 4px; color: #D1D5DB; }
     th .arrow.active { color: #2563EB; }
-    td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #F3F4F6;
-         vertical-align: middle; }
+    td { padding: 11px 16px; font-size: 14px; border-bottom: 1px solid #F3F4F6;
+         vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #F9FAFB; }
+    tr.editing td { background: #F0F9FF !important; }
     .name { font-weight: 600; color: #111827; }
     .url-link { color: #2563EB; text-decoration: none; font-size: 13px; }
     .url-link:hover { text-decoration: underline; }
     .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
              font-weight: 700; letter-spacing: .04em; border-radius: 6px;
              padding: 3px 9px; white-space: nowrap; }
-    .badge-verified  { background: #DCFCE7; color: #16A34A; }
+    .badge-verified   { background: #DCFCE7; color: #16A34A; }
     .badge-unverified { background: #F3F4F6; color: #9CA3AF; }
-    .actions { display: flex; gap: 8px; align-items: center; }
-    .btn { border: none; border-radius: 7px; padding: 5px 12px; font-size: 12px;
-           font-weight: 700; cursor: pointer; transition: opacity .15s; }
+    .actions { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+    .btn { border: none; border-radius: 7px; padding: 5px 10px; font-size: 12px;
+           font-weight: 700; cursor: pointer; transition: opacity .15s; white-space: nowrap; }
     .btn:hover { opacity: .8; }
+    .btn-edit     { background: #EFF6FF; color: #2563EB; }
     .btn-verify   { background: #DCFCE7; color: #16A34A; }
     .btn-unverify { background: #FEF9C3; color: #854D0E; }
     .btn-delete   { background: #FEE2E2; color: #DC2626; }
+    .btn-save     { background: #2563EB; color: #fff; }
+    .btn-cancel   { background: #F3F4F6; color: #6B7280; }
+    .edit-input { border: 1.5px solid #2563EB; border-radius: 6px; padding: 4px 8px;
+                  font-size: 13px; width: 100%; outline: none; font-family: inherit; }
     .num { color: #9CA3AF; font-size: 12px; font-weight: 600; text-align: center; }
     .date { color: #9CA3AF; font-size: 13px; }
     .empty { text-align: center; color: #9CA3AF; padding: 48px; }
@@ -132,14 +144,22 @@ function adminPage() {
   <!-- Table -->
   <div class="table-wrap">
     <table>
+      <colgroup>
+        <col class="col-num"/>
+        <col class="col-name"/>
+        <col class="col-url"/>
+        <col class="col-status"/>
+        <col class="col-added"/>
+        <col class="col-actions"/>
+      </colgroup>
       <thead>
         <tr>
-          <th style="width:48px;text-align:center">#</th>
+          <th style="text-align:center">#</th>
           <th onclick="setSort('name')">Name <span class="arrow" id="arr-name">⇅</span></th>
           <th onclick="setSort('url')">URL <span class="arrow" id="arr-url">⇅</span></th>
-          <th onclick="setSort('status')" style="width:130px">Status <span class="arrow" id="arr-status">⇅</span></th>
-          <th onclick="setSort('added')" style="width:130px">Added <span class="arrow" id="arr-added">⇅</span></th>
-          <th style="width:160px">Actions</th>
+          <th onclick="setSort('status')">Status <span class="arrow" id="arr-status">⇅</span></th>
+          <th onclick="setSort('added')">Added <span class="arrow" id="arr-added">⇅</span></th>
+          <th style="cursor:default">Actions</th>
         </tr>
       </thead>
       <tbody id="tbody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
@@ -213,27 +233,81 @@ function adminPage() {
       return;
     }
 
-    tbody.innerHTML = rows.map((l, i) => \`
+    tbody.innerHTML = rows.map((l, i) => normalRow(l, i + 1)).join('');
+  }
+
+  function normalRow(l, num) {
+    return \`
       <tr id="row-\${l.id}">
-        <td class="num">\${i + 1}</td>
-        <td><span class="name">\${escHtml(l.name)}</span></td>
-        <td><a class="url-link" href="\${escHtml(l.full_url)}" target="_blank" rel="noopener">\${escHtml(l.url)}</a></td>
-        <td>
-          \${l.verified
-            ? '<span class="badge badge-verified">✓ Verified</span>'
-            : '<span class="badge badge-unverified">Unverified</span>'}
-        </td>
+        <td class="num">\${num}</td>
+        <td title="\${escHtml(l.name)}"><span class="name">\${escHtml(l.name)}</span></td>
+        <td title="\${escHtml(l.full_url)}"><a class="url-link" href="\${escHtml(l.full_url)}" target="_blank" rel="noopener">\${escHtml(l.url)}</a></td>
+        <td>\${l.verified
+          ? '<span class="badge badge-verified">✓ Verified</span>'
+          : '<span class="badge badge-unverified">Unverified</span>'}</td>
         <td class="date">\${fmt(l.created_at)}</td>
         <td>
           <div class="actions">
+            <button class="btn btn-edit" onclick="startEdit(\${l.id})">Edit</button>
             \${l.verified
               ? \`<button class="btn btn-unverify" onclick="toggleVerify(\${l.id}, 0)">Unverify</button>\`
               : \`<button class="btn btn-verify"   onclick="toggleVerify(\${l.id}, 1)">Verify</button>\`}
             <button class="btn btn-delete" onclick="deleteListing(\${l.id}, '\${escHtml(l.name)}')">Delete</button>
           </div>
         </td>
-      </tr>
-    \`).join('');
+      </tr>\`;
+  }
+
+  function startEdit(id) {
+    const l = allListings.find(x => x.id === id);
+    if (!l) return;
+    const row = document.getElementById('row-' + id);
+    if (!row) return;
+    row.classList.add('editing');
+    row.innerHTML = \`
+      <td class="num">\${row.querySelector('.num') ? row.querySelector('.num').textContent : ''}</td>
+      <td><input class="edit-input" id="edit-name-\${id}" value="\${escHtml(l.name)}" placeholder="Name" /></td>
+      <td colspan="3"><input class="edit-input" id="edit-url-\${id}" value="\${escHtml(l.full_url)}" placeholder="https://example.com/llms.txt" /></td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-save"   onclick="saveEdit(\${id})">Save</button>
+          <button class="btn btn-cancel" onclick="cancelEdit(\${id})">Cancel</button>
+        </div>
+      </td>\`;
+    document.getElementById('edit-name-' + id).focus();
+  }
+
+  function cancelEdit(id) {
+    const l = allListings.find(x => x.id === id);
+    if (!l) return;
+    const rows = document.querySelectorAll('#tbody tr');
+    let num = 1;
+    rows.forEach(r => { if (r.id === 'row-' + id) {} else num++; });
+    // just re-render whole table to restore
+    renderTable();
+  }
+
+  async function saveEdit(id) {
+    const nameEl = document.getElementById('edit-name-' + id);
+    const urlEl  = document.getElementById('edit-url-'  + id);
+    if (!nameEl || !urlEl) return;
+    const newName    = nameEl.value.trim();
+    const newFullUrl = urlEl.value.trim();
+    if (!newName || !newFullUrl) { showToast('Name and URL are required'); return; }
+    const newUrl = newFullUrl.replace(/^https?:\\/\\//, '');
+    try {
+      const res = await fetch('/api/admin/listings/' + id + '/edit', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, url: newUrl, full_url: newFullUrl }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      const l = allListings.find(x => x.id === id);
+      if (l) { l.name = newName; l.url = newUrl; l.full_url = newFullUrl; }
+      renderTable();
+      showToast('✏️ Saved changes');
+    } catch { showToast('Error saving changes'); }
+  }
   }
 
   function escHtml(s) {
@@ -338,6 +412,24 @@ export default {
           await env.DB.prepare(
             "UPDATE listings SET verified = ? WHERE id = ?"
           ).bind(verified ? 1 : 0, id).run();
+          return Response.json({ success: true }, { headers: CORS });
+        } catch (err) {
+          return Response.json({ error: err.message }, { status: 500, headers: CORS });
+        }
+      }
+
+      // PUT /api/admin/listings/:id/edit — update name, url, full_url
+      const adminEdit = pathname.match(/^\/api\/admin\/listings\/(\d+)\/edit$/);
+      if (adminEdit && request.method === "PUT") {
+        try {
+          const id = adminEdit[1];
+          const { name, url: listingUrl, full_url } = await request.json();
+          if (!name || !listingUrl || !full_url) {
+            return Response.json({ error: "Missing fields" }, { status: 400, headers: CORS });
+          }
+          await env.DB.prepare(
+            "UPDATE listings SET name = ?, url = ?, full_url = ? WHERE id = ?"
+          ).bind(name, listingUrl, full_url, id).run();
           return Response.json({ success: true }, { headers: CORS });
         } catch (err) {
           return Response.json({ error: err.message }, { status: 500, headers: CORS });
