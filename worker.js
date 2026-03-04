@@ -44,6 +44,9 @@ function adminPage() {
              justify-content: space-between; position: sticky; top: 0; z-index: 10; }
     header h1 { font-size: 17px; font-weight: 800; color: #111827; }
     header span { font-size: 13px; color: #6B7280; }
+    .logout-btn { background: #FEE2E2; color: #DC2626; border: none; border-radius: 8px;
+                  padding: 7px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .logout-btn:hover { opacity: .8; }
     .main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
     .stats { display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
     .stat { background: #fff; border: 1.5px solid #E5E7EB; border-radius: 12px;
@@ -113,7 +116,10 @@ function adminPage() {
 <body>
 <header>
   <h1>🛠 LLM Directory Admin</h1>
-  <span id="headerCount">Loading…</span>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span id="headerCount">Loading…</span>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
 </header>
 
 <div class="main">
@@ -361,6 +367,18 @@ function adminPage() {
       renderTable();
       showToast('🗑 Deleted "' + name + '"');
     } catch { showToast('Error deleting listing'); }
+  }
+
+  async function logout() {
+    // Send a request with invalid credentials to clear the browser's cached Basic Auth
+    try {
+      await fetch('/admin', {
+        headers: { 'Authorization': 'Basic ' + btoa('logout:logout') },
+        cache: 'no-store'
+      });
+    } catch {}
+    // Redirect to home page after clearing credentials
+    window.location.replace('/');
   }
 
   loadListings();
