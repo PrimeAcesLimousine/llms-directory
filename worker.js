@@ -33,9 +33,16 @@ export default {
         if (!name || !listingUrl || !full_url) {
           return Response.json({ error: "Missing fields" }, { status: 400, headers: CORS });
         }
+        // INSERT OR IGNORE prevents duplicate full_url entries
+        await env.DB.prepare(
+          "INSERT OR IGNORE INTO listings (name, url, full_url, verified) VALUES (?, ?, ?, 0)"
+        ).bind(name, listingUrl, full_url).run();
         const row = await env.DB.prepare(
-          "INSERT INTO listings (name, url, full_url, verified) VALUES (?, ?, ?, 0) RETURNING *"
-        ).bind(name, listingUrl, full_url).first();
+          "SELECT * FROM listings WHERE full_url = ?"
+        ).bind(full_url).first();
+        if (!row) {
+          return Response.json({ error: "Insert failed" }, { status: 500, headers: CORS });
+        }
         return Response.json(row, { status: 201, headers: CORS });
       } catch (err) {
         return Response.json({ error: err.message }, { status: 500, headers: CORS });
