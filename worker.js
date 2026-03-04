@@ -308,7 +308,6 @@ function adminPage() {
       showToast('✏️ Saved changes');
     } catch { showToast('Error saving changes'); }
   }
-  }
 
   function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
