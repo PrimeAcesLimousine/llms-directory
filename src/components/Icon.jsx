@@ -93,3 +93,24 @@ export function InfoIcon({ color = "#2563EB" }) {
     </svg>
   );
 }
+
+export function GenerateNavIcon({ active }) {
+  const color = active ? "#2563EB" : "#9CA3AF";
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      {/* Large sparkle */}
+      <path
+        d="M12 3L13.8 9.2L20 11L13.8 12.8L12 19L10.2 12.8L4 11L10.2 9.2Z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        fill={active ? "#DBEAFE" : "none"}
+      />
+      {/* Small sparkle */}
+      <path
+        d="M19.5 17L20.3 19.2L22.5 20L20.3 20.8L19.5 23L18.7 20.8L16.5 20L18.7 19.2Z"
+        fill={color}
+      />
+    </svg>
+  );
+}

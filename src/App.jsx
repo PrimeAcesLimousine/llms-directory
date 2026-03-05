@@ -5,6 +5,7 @@ import { TopNav } from "./components/TopNav";
 import { HomePage } from "./pages/HomePage";
 import { DirectoryPage } from "./pages/DirectoryPage";
 import { SubmitPage } from "./pages/SubmitPage";
+import { GeneratePage } from "./pages/GeneratePage";
 import { useListings } from "./hooks/useListings";
 
 function AppInner() {
@@ -27,6 +28,9 @@ function AppInner() {
         )}
         {page === "submit" && (
           <SubmitPage onNavigate={handleNavigate} onSubmit={addListing} />
+        )}
+        {page === "generate" && (
+          <GeneratePage />
         )}
       </main>
 

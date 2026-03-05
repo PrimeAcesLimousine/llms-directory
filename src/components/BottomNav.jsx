@@ -1,4 +1,4 @@
-import { HomeIcon, DirectoryIcon, SubmitNavIcon } from "./Icon";
+import { HomeIcon, DirectoryIcon, SubmitNavIcon, GenerateNavIcon } from "./Icon";
 
 export function BottomNav({ page, onNavigate }) {
   return (
@@ -23,6 +23,10 @@ export function BottomNav({ page, onNavigate }) {
       <button onClick={() => onNavigate("directory")} style={navBtnStyle}>
         <DirectoryIcon active={page === "directory"} />
         <span style={{ ...navLabelStyle, color: page === "directory" ? "#2563EB" : "#9CA3AF" }}>Directory</span>
+      </button>
+      <button onClick={() => onNavigate("generate")} style={navBtnStyle}>
+        <GenerateNavIcon active={page === "generate"} />
+        <span style={{ ...navLabelStyle, color: page === "generate" ? "#2563EB" : "#9CA3AF" }}>Generate</span>
       </button>
       <button onClick={() => onNavigate("submit")} style={navBtnStyle}>
         <SubmitNavIcon active={page === "submit"} />

@@ -22,6 +22,12 @@ export function TopNav({ page, onNavigate }) {
           >
             Directory
           </button>
+          <button
+            onClick={() => onNavigate("generate")}
+            style={{ ...linkStyle, ...(page === "generate" ? activeLinkStyle : {}) }}
+          >
+            Generate
+          </button>
         </nav>
 
         {/* Submit CTA */}

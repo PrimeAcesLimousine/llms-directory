@@ -521,6 +521,135 @@ export default {
       }
     }
 
+    // GET /api/generate?url=... — scrape a URL and return a formatted llms.txt
+    if (pathname === "/api/generate" && request.method === "GET") {
+      const targetUrl = url.searchParams.get("url");
+      if (!targetUrl) {
+        return Response.json({ error: "Missing url parameter" }, { status: 400, headers: CORS });
+      }
+      try {
+        // Validate and parse the target URL
+        let parsedTarget;
+        try { parsedTarget = new URL(targetUrl); } catch {
+          return Response.json({ error: "Invalid URL" }, { status: 400, headers: CORS });
+        }
+        const origin = parsedTarget.origin;
+
+        // Fetch the target page
+        const pageRes = await fetch(targetUrl, {
+          headers: { "User-Agent": "LLMsDirectoryBot/1.0 (llms.txt generator; +https://llms-directory.lawrence-lim.workers.dev)" },
+          redirect: "follow",
+        });
+        if (!pageRes.ok) throw new Error(`Could not fetch the site (HTTP ${pageRes.status})`);
+        const html = await pageRes.text();
+
+        // Extract <title>
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const siteTitle = titleMatch
+          ? titleMatch[1].trim().replace(/\s+/g, " ").replace(/&amp;/g, "&").replace(/&mdash;/g, "—")
+          : parsedTarget.hostname;
+
+        // Extract meta description (both attribute orders)
+        const descMatch =
+          html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']{1,300})["']/i) ||
+          html.match(/<meta[^>]+content=["']([^"']{1,300})["'][^>]+name=["']description["']/i);
+        const description = descMatch ? descMatch[1].trim() : "";
+
+        // Try to extract links from <nav> or <header> first, then fall back to full page
+        const navBlock = html.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i) ||
+                         html.match(/<header[^>]*>([\s\S]*?)<\/header>/i);
+        const linkSource = navBlock ? navBlock[1] : html;
+
+        const linkRegex = /<a[^>]+href=["']([^"'#?][^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
+        const navLinks = [];
+        const seen = new Set([targetUrl, origin, origin + "/"]);
+        let m;
+        while ((m = linkRegex.exec(linkSource)) !== null) {
+          let href = m[1].trim();
+          const rawText = m[2].replace(/<[^>]+>/g, "").trim().replace(/\s+/g, " ");
+          if (!href || !rawText || rawText.length > 80 || rawText.length < 2) continue;
+          // Resolve relative URLs
+          try { href = new URL(href, origin).href; } catch { continue; }
+          if (!href.startsWith(origin)) continue;
+          if (seen.has(href)) continue;
+          seen.add(href);
+          navLinks.push({ href, text: rawText });
+          if (navLinks.length >= 15) break;
+        }
+
+        // Try sitemap.xml for additional pages
+        const sitemapLinks = [];
+        try {
+          const smRes = await fetch(`${origin}/sitemap.xml`, {
+            headers: { "User-Agent": "LLMsDirectoryBot/1.0" },
+          });
+          if (smRes.ok) {
+            const smText = await smRes.text();
+            const locRegex = /<loc>([^<]+)<\/loc>/g;
+            let sm;
+            while ((sm = locRegex.exec(smText)) !== null) {
+              const href = sm[1].trim();
+              if (!seen.has(href) && href.startsWith(origin)) {
+                seen.add(href);
+                const pathParts = new URL(href).pathname.split("/").filter(Boolean);
+                const name = pathParts.length === 0
+                  ? "Home"
+                  : pathParts[pathParts.length - 1]
+                      .replace(/[-_]/g, " ")
+                      .replace(/\.(html?|php|aspx?)$/i, "")
+                      .replace(/\b\w/g, (c) => c.toUpperCase());
+                sitemapLinks.push({ href, text: name });
+                if (sitemapLinks.length >= 20) break;
+              }
+            }
+          }
+        } catch { /* sitemap optional */ }
+
+        // Build llms.txt
+        const lines = [];
+        lines.push(`# ${siteTitle}`);
+        lines.push("");
+        if (description) {
+          lines.push(`> ${description}`);
+          lines.push("");
+        }
+
+        if (navLinks.length > 0) {
+          lines.push("## Pages");
+          lines.push("");
+          for (const { href, text } of navLinks) {
+            lines.push(`- [${text}](${href})`);
+          }
+          lines.push("");
+        }
+
+        if (sitemapLinks.length > 0) {
+          lines.push("## Sitemap");
+          lines.push("");
+          for (const { href, text } of sitemapLinks) {
+            lines.push(`- [${text}](${href})`);
+          }
+          lines.push("");
+        }
+
+        if (navLinks.length === 0 && sitemapLinks.length === 0) {
+          lines.push("## Source");
+          lines.push("");
+          lines.push(`- [Homepage](${origin}/)`);
+          lines.push("");
+        }
+
+        lines.push(`## About this file`);
+        lines.push("");
+        lines.push(`> Generated by LLM Directory — https://llms-directory.lawrence-lim.workers.dev`);
+        lines.push(`> Place this file at ${origin}/llms.txt`);
+
+        return Response.json({ text: lines.join("\n") }, { headers: CORS });
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 500, headers: CORS });
+      }
+    }
+
     // Everything else — serve static assets (React app)
     return env.ASSETS.fetch(request);
   },
