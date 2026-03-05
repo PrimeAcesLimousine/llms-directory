@@ -4,6 +4,7 @@ export function TopNav({ page, onNavigate }) {
       <div style={innerStyle}>
         {/* Logo */}
         <button onClick={() => onNavigate("home")} style={logoStyle}>
+          <img src="/logo.svg" alt="LLM Directory" style={logoImgStyle} />
           LLM Directory
         </button>
 
@@ -59,6 +60,15 @@ const logoStyle = {
   cursor: "pointer",
   padding: 0,
   whiteSpace: "nowrap",
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+};
+
+const logoImgStyle = {
+  height: 36,
+  width: "auto",
+  display: "block",
 };
 
 const linksStyle = {
