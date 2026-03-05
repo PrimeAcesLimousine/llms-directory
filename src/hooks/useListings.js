@@ -12,6 +12,7 @@ function rowToListing(row) {
     icon: "globe",
     tags: row.verified ? ["VERIFIED"] : [],
     checking: false,
+    created_at: row.created_at,
   };
 }
 
